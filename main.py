@@ -23,13 +23,18 @@ MAX_CHARS = 200
 
 
 def validate(text):
-    """Check the gate: 1-200 chars, a single line, not whitespace-only."""
+    """Check the gate: 1-200 chars, a single line, no control characters,
+    no double spaces, and not whitespace-only."""
     if not isinstance(text, str):
         return "entry is not text"
     if len(text) < 1 or len(text) > MAX_CHARS:
         return "entry must be 1-%d characters, got %d" % (MAX_CHARS, len(text))
     if "\n" in text or "\r" in text:
-        return "entry must be exactly one line"
+        return "entry must be exactly one line (no newline characters)"
+    if any(ord(char) < 0x20 or ord(char) == 0x7F for char in text):
+        return "entry must not contain control characters"
+    if "  " in text:
+        return "entry must not contain double spaces"
     if not text.strip():
         return "entry must not be whitespace-only"
     return None
@@ -113,7 +118,10 @@ def main(argv=None):
         if error:
             print("FAIL: %s" % error, file=sys.stderr)
             return 1
-        print("PASS: entry is %d characters, one line, non-whitespace" % len(ENTRY))
+        print(
+            "PASS: entry is %d characters, one line, no control characters, "
+            "no double spaces, non-whitespace" % len(ENTRY)
+        )
         return 0
     return write_entry(args.output)
 
